@@ -120,13 +120,13 @@ public:
 	FGameplayAttributeData CriticalHitResistance;
 	ATTRIBUTE_ACCESSORS(UAuraAttributeSet, CriticalHitResistance);
 
-	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_HealthRegenration, Category = "Secondary Attributes")
-	FGameplayAttributeData HealthRegenration;
-	ATTRIBUTE_ACCESSORS(UAuraAttributeSet, HealthRegenration);
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_HealthRegeneration, Category = "Secondary Attributes")
+	FGameplayAttributeData HealthRegeneration;
+	ATTRIBUTE_ACCESSORS(UAuraAttributeSet, HealthRegeneration);
 
-	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_ManaRegenration, Category = "Secondary Attributes")
-	FGameplayAttributeData ManaRegenration;
-	ATTRIBUTE_ACCESSORS(UAuraAttributeSet, ManaRegenration);
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_ManaRegeneration, Category = "Secondary Attributes")
+	FGameplayAttributeData ManaRegeneration;
+	ATTRIBUTE_ACCESSORS(UAuraAttributeSet, ManaRegeneration);
 
 	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_MaxHealth, Category = "Vital Attributes")
 	FGameplayAttributeData MaxHealth;
@@ -146,6 +146,12 @@ public:
 	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_Mana, Category = "Vital Attributes")
 	FGameplayAttributeData Mana;
 	ATTRIBUTE_ACCESSORS(UAuraAttributeSet, Mana);
+
+	//Meta Attributes
+	UPROPERTY(BlueprintReadOnly, Category = "Meta Attributes")
+	FGameplayAttributeData InComingDamage;
+	ATTRIBUTE_ACCESSORS(UAuraAttributeSet, InComingDamage);
+
 
 	UFUNCTION()
 	void OnRep_Health(const FGameplayAttributeData& OldHealth)const;
@@ -190,14 +196,14 @@ public:
 	void OnRep_CriticalHitResistance(const FGameplayAttributeData& OldCriticalHitResistance)const;
 
 	UFUNCTION()
-	void OnRep_HealthRegenration(const FGameplayAttributeData& OldHealthRegenration)const;
+	void OnRep_HealthRegeneration(const FGameplayAttributeData& OldHealthRegenration)const;
 	
 	UFUNCTION()
-	void OnRep_ManaRegenration(const FGameplayAttributeData& OldManaRegenration)const;
-
+	void OnRep_ManaRegeneration(const FGameplayAttributeData& OldManaRegenration)const;
 
 
 
 private:
 	void SetEffectProperties(const FGameplayEffectModCallbackData& Data,FEffectProperties& Props)const;
+	void ShowFloatingText(const FEffectProperties& Props, float Damage)const;
 };

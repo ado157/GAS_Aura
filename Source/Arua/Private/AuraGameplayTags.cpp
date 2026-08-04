@@ -69,5 +69,40 @@ void FAuraGameplayTags::InitializeNativeTags()
 		FString("提升最大魔法值")
 	);
 
+	//InputTag
+	GameplayTags.InputTag_LMB= UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("Input.LMB"),
+		FString("Input Tag for Left Mouse Button")
+	);
+	GameplayTags.InputTag_RMB= UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("Input.RMB"),
+		FString("Input Tag for Right Mouse Button")
+	);
+	GameplayTags.InputTag_1= UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("Input.1"),
+		FString("Input Tag for 1 key")
+	);
+	GameplayTags.InputTag_2= UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("Input.2"),
+		FString("Input Tag for 2 key")
+	);
+	GameplayTags.InputTag_3= UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("Input.3"),
+		FString("Input Tag for 3 key")
+	);
+	GameplayTags.InputTag_4 = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("Input.4"),
+		FString("Input Tag for 4 key")
+	);
+
+
+	GameplayTags.Damage = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("Damage"),
+		FString("Damage")
+	);
+	GameplayTags.Effects_HitReact = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("Effects_HitReact"),
+		FString("Tag granted when Hit Reacting")
+	);
 }
 

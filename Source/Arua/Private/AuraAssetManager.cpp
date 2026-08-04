@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "AuraAssetManager.h"
@@ -14,4 +14,6 @@ void UAuraAssetManager::StartInitialLoading()
 {
 	Super::StartInitialLoading();
 	FAuraGameplayTags::InitializeNativeTags();
+	//使用TargetData的前置，新版本会自动调用
+	//UAbilitySystemGlobals::Get().InitGlobalData();
 }

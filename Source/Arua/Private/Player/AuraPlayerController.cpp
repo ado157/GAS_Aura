@@ -1,15 +1,25 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Player/AuraPlayerController.h"
-#include "EnhancedInputSubsystems.h"
-#include "EnhancedInputComponent.h"
+#include "AbilitySystem/AuraAbilitySystemComponent.h"
+#include "Components/SplineComponent.h"
 #include "Engine/LocalPlayer.h"
+#include "EnhancedInputSubsystems.h"
+#include "AuraGameplayTags.h"
+#include "NavigationPath.h"
+#include "GameFrameWork/Character.h"
+#include "UI/Widget/DamageTextComponent.h"
+
+#include <AbilitySystemBlueprintLibrary.h>
+#include <Input/AuraInputComponent.h>
 #include <InterAction/EnemyInterface.h>
+#include <NavigationSystem.h>
+
 AAuraPlayerController::AAuraPlayerController()
 {
 	// 多人游戏下 PlayerController 仅在 owning client 存在，需标记复制
 	bReplicates = true;
+	Spline = CreateDefaultSubobject<USplineComponent>("Spline");
 }
 
 // 每帧执行光标射线检测，驱动鼠标悬停高亮逻辑
@@ -17,7 +27,41 @@ void AAuraPlayerController::PlayerTick(float DeltaTime)
 {
 	Super::PlayerTick(DeltaTime);
 	CursorTrace();
+	AutoRun();
+
 }
+
+
+void AAuraPlayerController::ShowDamageNumber_Implementation(float DamageAmount, ACharacter* TargetCharacter)
+{
+	if (IsValid(TargetCharacter) && DamageTextComponentClass)
+	{
+		UDamageTextComponent* DamageText=NewObject<UDamageTextComponent>(TargetCharacter, DamageTextComponentClass);
+		DamageText->RegisterComponent();
+		DamageText->AttachToComponent(TargetCharacter->GetRootComponent(),FAttachmentTransformRules::KeepRelativeTransform);
+		DamageText->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
+		DamageText->SetDamageText(DamageAmount);
+	}
+}
+
+void AAuraPlayerController::AutoRun()
+{
+	if (!bAutoRuning)return;
+	if (APawn* ControllerPawn = GetPawn())
+	{
+		const FVector LocationSpline = Spline->FindLocationClosestToWorldLocation(ControllerPawn->GetActorLocation(), ESplineCoordinateSpace::World);
+		const FVector Direction = Spline->FindDirectionClosestToWorldLocation(LocationSpline, ESplineCoordinateSpace::World);
+		ControllerPawn->AddMovementInput(Direction);
+
+		const float DistanceToDestination = (LocationSpline - CachedDestination).Length();
+		if (DistanceToDestination <= AutoRunAcceptanceRadius)
+		{
+			bAutoRuning = false;
+		}
+	}
+}
+
+
 
 void AAuraPlayerController::BeginPlay()
 {
@@ -45,8 +89,11 @@ void AAuraPlayerController::BeginPlay()
 void AAuraPlayerController::SetupInputComponent()
 {
 	Super::SetupInputComponent();
-	UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(InputComponent);
-	EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AAuraPlayerController::Move);
+	UAuraInputComponent* AuraInputComponent = CastChecked<UAuraInputComponent>(InputComponent);
+	AuraInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AAuraPlayerController::Move);
+	AuraInputComponent->BindAction(ShiftAction, ETriggerEvent::Started, this, &AAuraPlayerController::ShiftPressed);
+	AuraInputComponent->BindAction(ShiftAction, ETriggerEvent::Completed, this, &AAuraPlayerController::ShiftReleased);
+	AuraInputComponent->BindAbilityActions(InputConfig, this, &ThisClass::AbilityInputTagPressed, &ThisClass::AbilityInputTagReleased, &ThisClass::AbilityInputTagHeld);
 }
 
 // WASD → 基于摄像机方向的平面移动
@@ -70,7 +117,6 @@ void AAuraPlayerController::Move(const FInputActionValue& InputActionValue)
 // 每帧从光标位置射出一条 Visibility 通道射线，命中实现了 IEnemyInterface 的 Actor 则高亮
 void AAuraPlayerController::CursorTrace()
 {
-	FHitResult CursorHit;
 	GetHitResultUnderCursor(ECC_Visibility, false, CursorHit);
 	if (!CursorHit.bBlockingHit)return;
 
@@ -79,32 +125,104 @@ void AAuraPlayerController::CursorTrace()
 	ThisActor=Cast<IEnemyInterface>(CursorHit.GetActor());
 
 	// 四种状态转移
-	if (LastActor == nullptr)
+	if (LastActor != ThisActor)
 	{
-		if (ThisActor != nullptr)
-		{
-			// 鼠标移入可高亮对象
-			ThisActor->HighlightActor();
-		}
-	}
-	else
-	{
-		if (ThisActor == nullptr)
-		{
-			// 鼠标移出可高亮对象
-			LastActor->UnHighlightActor();
-		}
-		else
-		{
-			if (LastActor != ThisActor)
-			{
-				// 鼠标从 A 移到 B
-				LastActor->UnHighlightActor();
-				ThisActor->HighlightActor();
-			}
-			// else: 鼠标仍在同一对象上，不做任何操作
-		}
+		if (LastActor)LastActor->UnHighlightActor();
+		if (ThisActor)ThisActor->HighlightActor();
 	}
 
 
 }
+UAuraAbilitySystemComponent* AAuraPlayerController::GetASC()
+{
+	if (AuraAbilitySystemComponent == nullptr)
+	{
+		AuraAbilitySystemComponent = Cast<UAuraAbilitySystemComponent>(UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(GetPawn<APawn>()));
+	}
+	return AuraAbilitySystemComponent;
+}
+
+void AAuraPlayerController::AbilityInputTagPressed(FGameplayTag InputTag)
+{
+	if (InputTag.MatchesTagExact(FAuraGameplayTags::Get().InputTag_LMB))
+	{
+		bTargeting = ThisActor ? true : false;
+		bAutoRuning = false;
+	}
+
+}
+
+void AAuraPlayerController::AbilityInputTagReleased(FGameplayTag InputTag)
+{
+	if (!InputTag.MatchesTagExact(FAuraGameplayTags::Get().InputTag_LMB))
+	{
+		if (GetASC())
+		{
+			GetASC()->AbilityInputTagReleased(InputTag);
+
+		}
+		return;
+	}
+	if (GetASC())
+	{
+		GetASC()->AbilityInputTagReleased(InputTag);
+
+	}
+
+	if (!bTargeting&&!bShiftKeyDown)
+	{
+			const APawn* ControllerPawn = GetPawn();
+			if (FollowTime <= shortPressThreshold && ControllerPawn)
+			{
+				if (UNavigationPath* NavPath = UNavigationSystemV1::FindPathToLocationSynchronously(this, ControllerPawn->GetActorLocation(), CachedDestination))
+				{
+					Spline->ClearSplinePoints();
+					for (const FVector& PointLoc : NavPath->PathPoints)
+					{
+						Spline->AddSplinePoint(PointLoc, ESplineCoordinateSpace::World);
+						//DrawDebugSphere(GetWorld(), PointLoc, 8.f, 8, FColor::Green, false,5.f);
+					}
+					CachedDestination = NavPath->PathPoints[NavPath->PathPoints.Num() - 1];
+					bAutoRuning = true;
+				}
+			}
+			FollowTime = 0.f;
+			bTargeting = false;
+	}
+}
+
+void AAuraPlayerController::AbilityInputTagHeld(FGameplayTag InputTag)
+{
+	if (!InputTag.MatchesTagExact(FAuraGameplayTags::Get().InputTag_LMB))
+	{
+		if (GetASC())
+		{
+			GetASC()->AbilityInputTagHeld(InputTag);
+
+		}
+		return;
+	}
+	if (bTargeting||bShiftKeyDown)
+	{
+		if (GetASC())
+		{
+			GetASC()->AbilityInputTagHeld(InputTag);
+
+		}
+	}
+	else
+	{
+		FollowTime += GetWorld()->GetDeltaSeconds();
+		if (CursorHit.bBlockingHit)
+		{
+			CachedDestination = CursorHit.ImpactPoint;
+		}
+		if (APawn* ControllerPawn = GetPawn())
+		{
+			const FVector WorldDirection = (CachedDestination - ControllerPawn->GetActorLocation()).GetSafeNormal();
+			ControllerPawn->AddMovementInput(WorldDirection);
+		}
+	}
+
+}
+
