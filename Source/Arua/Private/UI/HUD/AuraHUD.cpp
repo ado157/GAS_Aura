@@ -5,6 +5,7 @@
 #include "UI/Widget/AuraUserWidget.h"
 #include "UI/WidgetController/OverlayWidgetController.h"
 #include "UI/WidgetController/AttributeMenuWidgetController.h"
+#include "UI/WidgetController/SpellMenuWidgetController.h"
 
 // 惰性创建 OverlayWidgetController（单例模式）
 // 首次调用时 NewObject 并绑定回调，后续直接返回已有实例
@@ -30,6 +31,18 @@ UAttributeMenuWidgetController* AAuraHUD::GetAttributeMenuWidgetController(const
 		AttributeMenuWidgetController->BindCallbacksToDependencies();
 	}
 	return AttributeMenuWidgetController;
+}
+
+
+USpellMenuWidgetController* AAuraHUD::GetSpellMenuWidgetController(const FWidgetControllerParams& WCParams)
+{
+    if (SpellMenuWidgetController == nullptr)
+    {
+        SpellMenuWidgetController = NewObject<USpellMenuWidgetController>(this, SpellMenuWidgetControllerClass);
+        SpellMenuWidgetController->SetWidgetControllerParams(WCParams);
+        SpellMenuWidgetController->BindCallbacksToDependencies();
+    }
+    return SpellMenuWidgetController;
 }
 
 // 由 AuraCharacter::InitAbilityActorInfo 调用，完成 HUD 完整装配流程：

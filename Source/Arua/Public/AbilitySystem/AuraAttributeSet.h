@@ -70,6 +70,7 @@ public:
 
 	virtual void PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue)override;
 	virtual void PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data)override;
+    virtual void PostAttributeChange(const FGameplayAttribute& Attribute, float OldValue, float NewValue)override;
 
 
 
@@ -135,9 +136,32 @@ public:
 	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_MaxMana, Category = "Vital Attributes")
 	FGameplayAttributeData MaxMana;
 	ATTRIBUTE_ACCESSORS(UAuraAttributeSet, MaxMana);
+    
+    
+    //
+    //Resilience Attributes
+    //
+    UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_FireResistance, Category = "Resistance Attributes")
+    FGameplayAttributeData FireResistance;
+    ATTRIBUTE_ACCESSORS(UAuraAttributeSet, FireResistance);
 
-	//
-	//Vital Attributes
+    UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_ArcaneResistance, Category = "Resistance Attributes")
+    FGameplayAttributeData ArcaneResistance;
+    ATTRIBUTE_ACCESSORS(UAuraAttributeSet, ArcaneResistance);
+    
+    UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_LightningResistance, Category = "Resistance Attributes")
+    FGameplayAttributeData LightningResistance;
+    ATTRIBUTE_ACCESSORS(UAuraAttributeSet, LightningResistance);
+    
+    UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_PhysicalResistance, Category = "Resistance Attributes")
+    FGameplayAttributeData PhysicalResistance;
+    ATTRIBUTE_ACCESSORS(UAuraAttributeSet, PhysicalResistance);
+
+
+
+
+    //
+    //Vital Attributes
 	//
 	UPROPERTY(BlueprintReadOnly,ReplicatedUsing=OnRep_Health,Category="Vital Attributes")
 	FGameplayAttributeData Health;
@@ -152,6 +176,10 @@ public:
 	FGameplayAttributeData InComingDamage;
 	ATTRIBUTE_ACCESSORS(UAuraAttributeSet, InComingDamage);
 
+
+    UPROPERTY(BlueprintReadOnly, Category = "Meta Attributes")
+    FGameplayAttributeData InComingXP;
+    ATTRIBUTE_ACCESSORS(UAuraAttributeSet, InComingXP);
 
 	UFUNCTION()
 	void OnRep_Health(const FGameplayAttributeData& OldHealth)const;
@@ -201,9 +229,29 @@ public:
 	UFUNCTION()
 	void OnRep_ManaRegeneration(const FGameplayAttributeData& OldManaRegenration)const;
 
+	UFUNCTION()
+	void OnRep_FireResistance(const FGameplayAttributeData& OldFireResistance)const;
+
+	UFUNCTION()
+	void OnRep_LightningResistance(const FGameplayAttributeData& OldLightningResistance)const;
+
+	UFUNCTION()
+	void OnRep_ArcaneResistance(const FGameplayAttributeData& OldArcaneResistance)const;
+
+    UFUNCTION()
+    void OnRep_PhysicalResistance(const FGameplayAttributeData& OldPhysicalResistance)const;
+
+
 
 
 private:
+    void HandleIncomingDamage(const FEffectProperties& Props);
+    void HandleIncomingXP(const FEffectProperties& Props);
+    void Debuff(const FEffectProperties& Props);
+
 	void SetEffectProperties(const FGameplayEffectModCallbackData& Data,FEffectProperties& Props)const;
-	void ShowFloatingText(const FEffectProperties& Props, float Damage)const;
+	void ShowFloatingText(const FEffectProperties& Props, float Damage,bool bBlockedHit,bool bCriticalHit)const;
+    void SendXPEvent(const FEffectProperties& Props);
+    bool bTopOffHealth = false;
+    bool bTopOffMana = false;
 };

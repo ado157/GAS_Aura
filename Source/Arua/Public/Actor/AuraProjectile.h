@@ -3,15 +3,15 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "AbilitySystem/AuraAbilityTypes.h"
 #include "GameFramework/Actor.h"
-#include "GameplayEffectTypes.h"
 #include "AuraProjectile.generated.h"
 
 class UNiagaraSystem;
 class USphereComponent;
 class UProjectileMovementComponent;
 class UAudioComponent;
-
+class USceneComponent;
 UCLASS()
 class ARUA_API AAuraProjectile : public AActor
 {
@@ -24,15 +24,21 @@ public:
 	TObjectPtr<UProjectileMovementComponent> ProjectileMovement;
 
 	UPROPERTY(BlueprintReadWrite, meta = (ExposeOnSpawn = true))
-	FGameplayEffectSpecHandle DamageEffectSpecHandle;
+	FDamageEffectParams DamageEffectParams;
 
+    UPROPERTY()
+    TObjectPtr<USceneComponent>HomingTargetSceneComponent;
 protected:
 	virtual void BeginPlay() override;
 	virtual void Destroyed() override;
 
 	UFUNCTION()
 	void OnSphereOverlap(UPrimitiveComponent* OverlappedComponent,AActor* OtherActor, UPrimitiveComponent* OtherComp,int32 OtherBodyIndex,bool bFromSweep,const FHitResult& SweepResult);
+    
+    void OnHit();
 
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+    TObjectPtr<USphereComponent> Sphere;
 private:
 
 	UPROPERTY(EditDefaultsOnly)
@@ -40,8 +46,7 @@ private:
 
 	bool bHit = false;
 
-	UPROPERTY(VisibleAnywhere)
-	TObjectPtr<USphereComponent> Sphere;
+
 
 	UPROPERTY(EditAnywhere)
 	TObjectPtr<UNiagaraSystem> ImpactEffect;

@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "Actor/AuraEffectActor.h"
@@ -20,6 +20,7 @@ void AAuraEffectActor::BeginPlay()
 
 void AAuraEffectActor::ApplyEffectToTarget(AActor* TargetActor, TSubclassOf<UGameplayEffect> GameplayEffectClass)
 {
+        if (TargetActor->ActorHasTag(FName("Enemy")) && !bApplyEffectsToEnemies)return;
 		UAbilitySystemComponent* TargetASC=UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(TargetActor);
 		if (TargetASC == nullptr)return;
 		check(GameplayEffectClass);
@@ -33,11 +34,17 @@ void AAuraEffectActor::ApplyEffectToTarget(AActor* TargetActor, TSubclassOf<UGam
 		{
 			ActiveEffectHandles.Add(ActiveEffectHandle,TargetASC);
 		}
+        if (!bIsInfinite)
+        {
+            Destroy();
+        }
 
 }
 //开始重叠时
 void AAuraEffectActor::OnOverlap(AActor* TargetActor)
 {
+    if (TargetActor->ActorHasTag(FName("Enemy")) && !bApplyEffectsToEnemies)return;
+
 	if (InstanceEffectApplicationPolicy == EEffectApplicationPolicy::ApplyOnOverlap)
 	{
 		ApplyEffectToTarget(TargetActor, InstantGameplayEffectClass);

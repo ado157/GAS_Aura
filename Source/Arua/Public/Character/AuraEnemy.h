@@ -5,12 +5,14 @@
 #include "CoreMinimal.h"
 #include "Character/AuraCharacterBase.h"
 #include "InterAction/EnemyInterface.h"
-#include "AbilitySystem/Data/CharacterClassInfo.h"
+
 #include "UI/WidgetController/OverlayWidgetController.h"
 
 #include "AuraEnemy.generated.h"
 
 class UWidgetComponent;
+class UBehaviorTree;
+class AAuraAIController;
 /**
  * 
  */
@@ -21,13 +23,16 @@ class ARUA_API AAuraEnemy : public AAuraCharacterBase,public IEnemyInterface
 	
 public:
 		AAuraEnemy();
+
+        virtual void PossessedBy(AController* NewController)override;
+
 		//EnemyInterface
 		virtual void HighlightActor() override;
 		virtual void UnHighlightActor() override;
 
 		//CombatInterface
-		virtual int32 GetPlayerLevel() override;
-		virtual void Die()override;
+		virtual int32 GetPlayerLevel_Implementation() override;
+		virtual void Die(const FVector& DeathImpluse)override;
 
 
 
@@ -41,25 +46,34 @@ public:
 		UPROPERTY(BlueprintReadOnly,Category="Combat")
 		bool bHitReacting = false;
 
-		UPROPERTY(BlueprintReadOnly, Category = "Combat")
+		UPROPERTY(EditAnywhere,BlueprintReadOnly, Category = "Combat")
 		float BaseWalkSpeed=250.f;
 
 		UPROPERTY(EditAnywhere,BlueprintReadOnly, Category = "Combat")
 		float LifeSpan = 5.f;
+
+        UPROPERTY(BlueprintReadWrite,Category="Combat")
+        TObjectPtr<AActor> CombatTarget;
+
 protected:
 	virtual void BeginPlay()override;
 
 	virtual void InitAbilityActorInfo()override;
 
 	virtual void InitializeDefaultAttributes()const override;
-
+    virtual void SetCombatTarget_Implementation(AActor* IncombatTarget)override;
+    virtual AActor* GetCombatTarget_Implementation()const override;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character Class Defaults");
 	int32 Level = 1;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character Class Defaults");
-	ECharacterClass CharacterClass = ECharacterClass::Warrior;
+
 
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly)
 	TObjectPtr<UWidgetComponent> HealthBar;
+
+    UPROPERTY(EditAnywhere,Category="AI")
+    TObjectPtr<UBehaviorTree>BehaviorTree;
+    UPROPERTY()
+    TObjectPtr<AAuraAIController>AuraAIController;
 
 };

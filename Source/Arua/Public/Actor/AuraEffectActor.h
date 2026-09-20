@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -46,7 +46,10 @@ protected:
 
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Applied Effects")
-	bool bDestoryOnEffectRemoval = false;
+	bool bDestoryOnEffectApplication = false;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Applied Effects")
+    bool bApplyEffectsToEnemies = false;
 
 
 	UPROPERTY(EditAnywhere,BlueprintReadOnly,Category="Applied Effects")

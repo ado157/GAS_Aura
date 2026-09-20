@@ -8,7 +8,8 @@
 #include <AbilitySystem/Data/AttributeInfo.h>
 #include "AttributeMenuWidgetController.generated.h"
 
-
+class UAttributeInfo;
+struct FGameplayTag;
 struct FAuraAttributeInfo;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FAttributeInfoSignature,const FAuraAttributeInfo&,Info);
@@ -23,9 +24,16 @@ class ARUA_API UAttributeMenuWidgetController : public UAuraWidgetController
 public:
 	virtual void BindCallbacksToDependencies()override;
 	virtual void BroadcastInitialValues()override;
-		
+	
+    UPROPERTY(BlueprintAssignable, Category = "GAS|Attributes")
+    FOnPlayerStateChangedSignature AttributePointsChangedDelegate;
+
 	UPROPERTY(BlueprintAssignable,Category="GAS|Attributes")
 	FAttributeInfoSignature AttributeInfoDelegate;
+
+    UFUNCTION(BlueprintCallable)
+    void UpgradeAttribute(const FGameplayTag& AttributeTag);
+
 
 protected:
 	UPROPERTY(EditDefaultsOnly)

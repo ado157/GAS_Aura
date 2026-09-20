@@ -2,7 +2,7 @@
 
 
 #include "AbilitySystem/AuraAbilitySystemGlobals.h"
-#include "AuraAbilityTypes.h"
+#include "AbilitySystem/AuraAbilityTypes.h"
 
 FGameplayEffectContext* UAuraAbilitySystemGlobals::AllocGameplayEffectContext() const
 {

@@ -15,6 +15,7 @@ class UAuraInputConfig;
 class UAuraAbilitySystemComponent;
 class USplineComponent;
 class UDamageTextComponent;
+class UNiagaraSystem;
 /**
  * 
  */
@@ -27,7 +28,7 @@ public:
 	virtual void PlayerTick(float DeltaTime)override;
 
 	UFUNCTION(Client,Reliable)
-	void ShowDamageNumber(float DamageAmount,ACharacter* TargetCharacter);
+	void ShowDamageNumber(float DamageAmount,ACharacter* TargetCharacter, bool bBlockedHit, bool bCriticalHit);
 protected:
 	virtual void BeginPlay() override;
 
@@ -73,11 +74,14 @@ private:
 	bool bAutoRuning = false;
 	bool bTargeting = false;
 
-	UPROPERTY()
+	UPROPERTY(EditDefaultsOnly)
 	float AutoRunAcceptanceRadius=50.f;
 
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<USplineComponent> Spline;
+
+    UPROPERTY(EditDefaultsOnly)
+    TObjectPtr<UNiagaraSystem> ClickNiagaraSystem;
 
 	void AutoRun();
 
