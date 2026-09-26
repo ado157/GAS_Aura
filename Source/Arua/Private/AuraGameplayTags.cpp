@@ -234,6 +234,25 @@ void FAuraGameplayTags::InitializeNativeTags()
         FString("Electrocute Ability Tag")
     );
 
+    //Passive Spells
+    GameplayTags.Abilities_Passive_LifeSiphon= UGameplayTagsManager::Get().AddNativeGameplayTag(
+        FName("Abilities.Passive.LifeSiphon"),
+        FString("LifeSiphon")
+    );
+    GameplayTags.Abilities_Passive_ManaSiphon = UGameplayTagsManager::Get().AddNativeGameplayTag(
+        FName("Abilities.Passive.ManaSiphon"),
+        FString("ManaSiphon")
+    );
+    GameplayTags.Abilities_Passive_HaloOfProtection = UGameplayTagsManager::Get().AddNativeGameplayTag(
+        FName("Abilities.Passive.HaloOfProtection"),
+        FString("HaloOfProtection")
+    );
+
+
+
+
+
+
     GameplayTags.Abilities_HitReact = UGameplayTagsManager::Get().AddNativeGameplayTag(
         FName("Abilities.HitReact"),
         FString("Hit React Ability")
@@ -313,5 +332,27 @@ void FAuraGameplayTags::InitializeNativeTags()
         FName("Montage.Attack.4"),
         FString("Attack 4")
     );
+
+    //Player Tags
+    GameplayTags.Player_Block_CursorTrace = UGameplayTagsManager::Get().AddNativeGameplayTag(
+        FName("Player.Block.CursorTrace"),
+        FString("Block tracing under the cursor")
+    );
+
+    GameplayTags.Player_Block_InputHeld = UGameplayTagsManager::Get().AddNativeGameplayTag(
+        FName("Player.Block.InputHeld"),
+        FString("Block Input Held callback for Input")
+    );
+
+    GameplayTags.Player_Block_InputPressed = UGameplayTagsManager::Get().AddNativeGameplayTag(
+        FName("Player.Block.InputPressed"),
+        FString("Block Input Pressed callback for Input")
+    );
+
+    GameplayTags.Player_Block_InputReleased = UGameplayTagsManager::Get().AddNativeGameplayTag(
+        FName("Player.Block.InputReleased"),
+        FString("Block Input Released callback for Input")
+    );
+
 }
 

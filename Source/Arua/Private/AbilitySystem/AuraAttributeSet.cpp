@@ -193,9 +193,13 @@ void UAuraAttributeSet::HandleIncomingDamage(const FEffectProperties& Props)
         }
         else
         {
-            FGameplayTagContainer TagContainer;
-            TagContainer.AddTag(FAuraGameplayTags::Get().Effects_HitReact);
-            Props.TargetASC->TryActivateAbilitiesByTag(TagContainer);
+            if (Props.TargetCharacter->Implements<UCombatInterface>() && !ICombatInterface::Execute_IsBeingShocked(Props.TargetCharacter))
+            {
+                FGameplayTagContainer TagContainer;
+                TagContainer.AddTag(FAuraGameplayTags::Get().Effects_HitReact);
+                Props.TargetASC->TryActivateAbilitiesByTag(TagContainer);
+            }
+
             const FVector& KnockbackForce = UAuraAbilitySystemLibrary::GetKnockbackForce(Props.EffectContextHandle);
             if (!KnockbackForce.IsNearlyZero(1.f))
             {
@@ -256,30 +260,54 @@ void UAuraAttributeSet::Debuff(const FEffectProperties& Props)
     const float DebuffDuration = UAuraAbilitySystemLibrary::GetDebuffDuration(Props.EffectContextHandle);
     const float DebuffFrequency = UAuraAbilitySystemLibrary::GetDebuffFrequency(Props.EffectContextHandle);
 
-    FString DebuffName = FString::Printf(TEXT("DynamicDebuff_%s"), *DamageType.ToString());
-    UGameplayEffect* Effect = NewObject<UGameplayEffect>(GetTransientPackage(), FName(DebuffName));
+    // 修复开始：复用当前目标的 Debuff 定义，避免同名对象重建，同时保留原有叠层行为。
+    // FString DebuffName = FString::Printf(TEXT("DynamicDebuff_%s"), *DamageType.ToString());
+    // UGameplayEffect* Effect = NewObject<UGameplayEffect>(GetTransientPackage(), FName(DebuffName));
+    UGameplayEffect* Effect = DynamicDebuffEffects.FindRef(DamageType);
+    if (!Effect)
+    {
+        Effect = NewObject<UGameplayEffect>(GetTransientPackage());
+        DynamicDebuffEffects.Add(DamageType, Effect);
+    }
+    // 修复结束。
 
     Effect->DurationPolicy = EGameplayEffectDurationType::HasDuration;
     Effect->Period = DebuffFrequency;
     Effect->DurationMagnitude = FScalableFloat(DebuffDuration);
 
-
     Effect->StackingType = EGameplayEffectStackingType::AggregateBySource;
     Effect->StackLimitCount = 1;
-    const int32 Index = Effect->Modifiers.Num();
-    Effect->Modifiers.Add(FGameplayModifierInfo());
-    FGameplayModifierInfo& ModifierInfo = Effect->Modifiers[Index];
+    // 修复开始：复用现有 Modifier，避免 Add 导致聚合器保存的标签条件指针失效。
+    // const int32 Index = Effect->Modifiers.Num();
+    // Effect->Modifiers.Add(FGameplayModifierInfo());
+    // FGameplayModifierInfo& ModifierInfo = Effect->Modifiers[Index];
+    if (Effect->Modifiers.IsEmpty())
+    {
+        Effect->Modifiers.Add(FGameplayModifierInfo());
+    }
+    FGameplayModifierInfo& ModifierInfo = Effect->Modifiers[0];
+    // 修复结束。
 
     ModifierInfo.ModifierMagnitude = FScalableFloat(DebuffDamage);
     ModifierInfo.ModifierOp = EGameplayModOp::Additive;
     ModifierInfo.Attribute = UAuraAttributeSet::GetInComingDamageAttribute();
 
+    const FGameplayTag DebuffTag = GameplayTags.DamageTypesToDebuff[DamageType];
+
+    // 保留现有的 Effect 配置和 Modifier 配置
+
     FGameplayEffectSpec* MutableSpec =
         new FGameplayEffectSpec(Effect, EffectContext, 1.f);
 
-    MutableSpec->DynamicGrantedTags.AddTag(
-        GameplayTags.DamageTypesToDebuff[DamageType]
-    );
+    MutableSpec->DynamicGrantedTags.AddTag(DebuffTag);
+
+    if (DebuffTag.MatchesTagExact(GameplayTags.Debuff_Stun))
+    {
+        MutableSpec->DynamicGrantedTags.AddTag(GameplayTags.Player_Block_CursorTrace);
+        MutableSpec->DynamicGrantedTags.AddTag(GameplayTags.Player_Block_InputHeld);
+        MutableSpec->DynamicGrantedTags.AddTag(GameplayTags.Player_Block_InputPressed);
+        MutableSpec->DynamicGrantedTags.AddTag(GameplayTags.Player_Block_InputReleased);
+    }
 
     if (MutableSpec)
     {

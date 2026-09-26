@@ -249,6 +249,11 @@ private:
     void HandleIncomingXP(const FEffectProperties& Props);
     void Debuff(const FEffectProperties& Props);
 
+    // 修复开始：每个目标按伤害类型保留 Debuff 定义，维持 AggregateBySource 的叠层匹配。
+    UPROPERTY(Transient)
+    TMap<FGameplayTag, TObjectPtr<UGameplayEffect>> DynamicDebuffEffects;
+    // 修复结束。
+
 	void SetEffectProperties(const FGameplayEffectModCallbackData& Data,FEffectProperties& Props)const;
 	void ShowFloatingText(const FEffectProperties& Props, float Damage,bool bBlockedHit,bool bCriticalHit)const;
     void SendXPEvent(const FEffectProperties& Props);
